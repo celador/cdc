@@ -1,0 +1,31 @@
+{
+  "name": "cdc_example",
+  "hostname": "revops-air.lan",
+  "pid": 19438,
+  "level": 30,
+  "data": {
+    "schema": "MWJcTeTRofZejkuIT_T54g",
+    "payload": {
+      "LastModifiedDate": "2020-07-13T20:59:59.000Z",
+      "ExpectedRevenue": 6750,
+      "Amount": 67500,
+      "ChangeEventHeader": {
+        "commitNumber": 10898627829890,
+        "commitUser": "0055w00000BhXkiAAF",
+        "sequenceNumber": 1,
+        "entityName": "Opportunity",
+        "changeType": "UPDATE",
+        "changedFields": ["Amount", "ExpectedRevenue", "LastModifiedDate"],
+        "changeOrigin": "com/salesforce/api/soap/48.0;client=SfdcInternalAPI/",
+        "transactionKey": "0000cca5-51be-e32b-a395-c2aa76de8ba3",
+        "commitTimestamp": 1594673999000,
+        "recordIds": ["0065w000023OUwTAAW"]
+      }
+    },
+    "event": { "replayId": 5625 }
+  },
+  "channel": "/data/ChangeEvents",
+  "msg": "",
+  "time": "2020-07-13T20:59:59.817Z",
+  "v": 0
+}
