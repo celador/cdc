@@ -1,15 +1,15 @@
-var cometd_lib = require('cometd');
-var bunyan = require('bunyan');
-var jsforce = require('jsforce');
-var lo = require('lodash');
-var process = require('process');
-var Q = require('q');
-var yargs = require('yargs');
+var cometd_lib = require("cometd");
+var bunyan = require("bunyan");
+var jsforce = require("jsforce");
+var lo = require("lodash");
+var process = require("process");
+var Q = require("q");
+var yargs = require("yargs");
 
-var logger = bunyan.createLogger({name: 'cdc_example'});
+var logger = bunyan.createLogger({ name: "cdc_example" });
 
 // If this line goes above the jsforce declaration it fails
-require('cometd-nodejs-client').adapt();
+require("cometd-nodejs-client").adapt();
 var cometd = new cometd_lib.CometD();
 
 /**
@@ -19,7 +19,7 @@ var cometd = new cometd_lib.CometD();
  * @returns {string} The change data capture url
  */
 function getCometdURL(conn) {
-    return conn.instanceUrl + '/cometd/44.0';
+  return conn.instanceUrl + "/cometd/44.0";
 }
 
 /**
@@ -28,15 +28,15 @@ function getCometdURL(conn) {
  * @returns {string} The channel
  */
 function getCometdChannel(args) {
-    var channel = '/data/' + args.object + 'ChangeEvents';
+  var channel = "/data/" + args.object + "ChangeEvents";
 
-    if (lo.isEmpty(args.object)) {
-        channel = '/data/ChangeEvents';
-    } else if (lo.endsWith(args.object, '__c')) {
-        channel = '/data/' + lo.trimEnd(args.object + '__c') + '__ChangeEvent';
-    }
+  if (lo.isEmpty(args.object)) {
+    channel = "/data/ChangeEvents";
+  } else if (lo.endsWith(args.object, "__c")) {
+    channel = "/data/" + lo.trimEnd(args.object + "__c") + "__ChangeEvent";
+  }
 
-    return channel;
+  return channel;
 }
 
 /**
@@ -45,18 +45,18 @@ function getCometdChannel(args) {
  * @returns {Promise} Promise for when cometd is setup
  */
 var cometd_setup = function (data) {
-    var deferred = Q.defer();
-    var url = getCometdURL(data.conn, data.args);
+  var deferred = Q.defer();
+  var url = getCometdURL(data.conn, data.args);
 
-    cometd.configure({
-        appendMessageTypeToURL: false,
-        requestHeaders: { Authorization: 'Bearer ' + data.conn.accessToken },
-        url: url
-    });
+  cometd.configure({
+    appendMessageTypeToURL: false,
+    requestHeaders: { Authorization: "Bearer " + data.conn.accessToken },
+    url: url,
+  });
 
-    deferred.resolve(data);
+  deferred.resolve(data);
 
-    return deferred.promise;
+  return deferred.promise;
 };
 
 /**
@@ -65,17 +65,17 @@ var cometd_setup = function (data) {
  * @returns {Promise} Promise for when cometd handshake is complete
  */
 var cometd_handshake = function (data) {
-    var deferred = Q.defer();
+  var deferred = Q.defer();
 
-    cometd.handshake(function (handshake) {
-        if (handshake.successful) {
-            deferred.resolve(data);
-        } else {
-            deferred.reject('Handshake failed');
-        }
-    });
+  cometd.handshake(function (handshake) {
+    if (handshake.successful) {
+      deferred.resolve(data);
+    } else {
+      deferred.reject("Handshake failed");
+    }
+  });
 
-    return deferred.promise;
+  return deferred.promise;
 };
 
 /**
@@ -84,8 +84,8 @@ var cometd_handshake = function (data) {
  * @returns {undefined}
  */
 var cometd_processdata = function (server_data) {
-    // Do something more useful with the data
-    logger.info(server_data);
+  // Do something more useful with the data
+  logger.info(server_data);
 };
 
 /**
@@ -94,12 +94,12 @@ var cometd_processdata = function (server_data) {
  * @returns {Promise} Promise for when the subscription has happened
  */
 var cometd_subscribe = function (data) {
-    var deferred = Q.defer();
+  var deferred = Q.defer();
 
-    cometd.subscribe(getCometdChannel(data.args), cometd_processdata);
-    deferred.resolve();
+  cometd.subscribe(getCometdChannel(data.args), cometd_processdata);
+  deferred.resolve();
 
-    return deferred.promise;
+  return deferred.promise;
 };
 
 /**
@@ -108,26 +108,36 @@ var cometd_subscribe = function (data) {
  * @returns {Promise} A promise for when the login has occurred
  */
 var login = function (args) {
-    var deferred = Q.defer();
-    var config = {};
+  var deferred = Q.defer();
+  var config = {};
 
-    if (args.sandbox) {
-        config.loginUrl = 'https://login.salesforce.com';
-    }
+  if (args.sandbox) {
+    config.loginUrl = "https://login.salesforce.com";
+  }
 
+  if (args.access_token && args.instance_url) {
+    return Q.resolve({
+      conn: new jsforce.Connection({
+        accessToken: args.access_token,
+        instanceUrl: args.instance_url,
+      }),
+      args: args,
+    });
+  } else {
     var conn = new jsforce.Connection(config);
     conn.login(args.username, args.password + args.token, function (error) {
-        if (error) {
-            deferred.reject(error);
-        } else {
-            deferred.resolve({
-                conn: conn,
-                args: args
-            });
-        }
+      if (error) {
+        deferred.reject(error);
+      } else {
+        deferred.resolve({
+          conn: conn,
+          args: args,
+        });
+      }
     });
 
     return deferred.promise;
+  }
 };
 
 /**
@@ -136,14 +146,14 @@ var login = function (args) {
  * @returns {undefined}
  */
 var monitor = function (args) {
-    login(args)
-        .then(cometd_setup)
-        .then(cometd_handshake)
-        .then(cometd_subscribe)
-        .catch(function (error) {
-            logger.error(error);
-            process.exit(1);
-        });
+  login(args)
+    .then(cometd_setup)
+    .then(cometd_handshake)
+    .then(cometd_subscribe)
+    .catch(function (error) {
+      logger.error(error);
+      process.exit(1);
+    });
 };
 
 /**
@@ -151,45 +161,53 @@ var monitor = function (args) {
  * @returns {Promise} A promise for when the command has been run
  */
 var run = function () {
-    var deferred = Q.defer();
+  var deferred = Q.defer();
 
-    yargs.usage('$0 <cmd> [args]')
-        .options({
-            username: {
-                describe: 'The Salesforce username',
-                type: 'string'
-            },
-            password: {
-                describe: 'The Salesforce password',
-                type: 'string'
-            },
-            token: {
-                describe: 'The Salesforce token',
-                type: 'string'
-            },
-            sandbox: {
-                describe: 'The Salesforce instance is a sandbox',
-                type: 'boolean'
-            }
-        })
-        .command(
-            'monitor [object]',
-            'Monitor an object',
-            function (args) {
-                args.positional('object', {
-                    describe: 'The object name',
-                    default: ''
-                });
-            },
-            monitor
-        ).argv;
+  yargs
+    .usage("$0 <cmd> [args]")
+    .options({
+      username: {
+        describe: "The Salesforce username",
+        type: "string",
+      },
+      password: {
+        describe: "The Salesforce password",
+        type: "string",
+      },
+      token: {
+        describe: "The Salesforce token",
+        type: "string",
+      },
+      access_token: {
+        describe: "The Salesforce access bearer token",
+        type: "string",
+      },
+      instance_url: {
+        describe: "The Salesforce instance url",
+        type: "string",
+      },
+      sandbox: {
+        describe: "The Salesforce instance is a sandbox",
+        type: "boolean",
+      },
+    })
+    .command(
+      "monitor [object]",
+      "Monitor an object",
+      function (args) {
+        args.positional("object", {
+          describe: "The object name",
+          default: "",
+        });
+      },
+      monitor
+    ).argv;
 
-    deferred.resolve();
+  deferred.resolve();
 
-    return deferred.promise;
+  return deferred.promise;
 };
 
-run()
-    .catch(function (error) {
-        logger.error(error);
-    });
+run().catch(function (error) {
+  logger.error(error);
+});
